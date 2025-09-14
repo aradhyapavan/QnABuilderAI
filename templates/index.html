@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row justify-content-center mb-5">
+    <div class="col-lg-10 text-center">
+        <div class="card glass-effect">
+            <div class="card-body py-5">
+                <h1 class="display-4 text-gradient mb-4">
+                    <i class="bi bi-robot"></i>
+                    AI Question Generator
+                </h1>
+                <p class="lead mb-4">
+                    Transform your PDF documents into intelligent questions using advanced AI technology.
+                    Perfect for educators, students, and content creators.
+                </p>
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <a href="{{ url_for('upload_pdf') }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-upload"></i>
+                        Start Generating Questions
+                    </a>
+                    <a href="{{ url_for('configure_chunking') }}" class="btn btn-outline btn-lg">
+                        <i class="bi bi-gear"></i>
+                        Configure Settings
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-file-earmark-pdf text-primary" style="font-size: 3rem;"></i>
+                </div>
+                <h4 class="card-title">Smart PDF Processing</h4>
+                <p class="text-muted">
+                    Upload any PDF document and our AI will intelligently analyze the content to extract key topics and concepts.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-question-circle text-success" style="font-size: 3rem;"></i>
+                </div>
+                <h4 class="card-title">Multiple Question Types</h4>
+                <p class="text-muted">
+                    Generate multiple choice questions, short answers, and descriptive questions with customizable difficulty levels.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-download text-warning" style="font-size: 3rem;"></i>
+                </div>
+                <h4 class="card-title">Export Options</h4>
+                <p class="text-muted">
+                    Download your generated questions in multiple formats including PDF and CSV for easy integration.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How It Works -->
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header text-center">
+                <h2 class="card-title">How It Works</h2>
+                <p class="card-subtitle">Simple steps to generate intelligent questions</p>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-4 text-center">
+                        <div class="mb-3">
+                            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                <span class="fw-bold">1</span>
+                            </div>
+                        </div>
+                        <h5>Upload PDF</h5>
+                        <p class="text-muted">Upload your PDF document and select the pages you want to process.</p>
+                    </div>
+                    
+                    <div class="col-md-4 text-center">
+                        <div class="mb-3">
+                            <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                <span class="fw-bold">2</span>
+                            </div>
+                        </div>
+                        <h5>AI Analysis</h5>
+                        <p class="text-muted">Our AI analyzes the content and extracts key topics and concepts.</p>
+                    </div>
+                    
+                    <div class="col-md-4 text-center">
+                        <div class="mb-3">
+                            <div class="rounded-circle bg-warning text-white d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                <span class="fw-bold">3</span>
+                            </div>
+                        </div>
+                        <h5>Generate & Export</h5>
+                        <p class="text-muted">Generate questions and download them in your preferred format.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

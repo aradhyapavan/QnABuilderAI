@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Topics</title>
+</head>
+<body>
+    <h1>Detected Topics</h1>
+    <ul>
+        {% for topic in auto_topics %}
+        <li>{{ topic }}</li>
+        {% endfor %}
+    </ul>
+    <form method="POST">
+        <label>Add more topics (comma-separated, max 5):
+            <input type="text" name="manual_topics">
+        </label>
+        <button type="submit">Continue</button>
+    </form>
+</body>
+</html>

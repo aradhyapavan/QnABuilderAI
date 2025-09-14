@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <a href="{{ url_for('select_questions') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+        <div class="card">
+            <div class="card-header text-center">
+                <h1 class="card-title text-gradient">
+                    <i class="bi bi-file-earmark-text"></i>
+                    Generated Questions
+                </h1>
+                <p class="card-subtitle">Your AI-generated questions are ready!</p>
+            </div>
+            
+            <div class="card-body">
+                <!-- Download Actions -->
+                <div class="d-flex justify-content-end mb-4 flex-wrap gap-2">
+                    <div class="btn-group">
+                        <a href="/download/csv" class="btn btn-success">
+                            <i class="bi bi-filetype-csv"></i>
+                            Download CSV (Current View)
+                        </a>
+                        <a href="/download/pdf" class="btn btn-danger">
+                            <i class="bi bi-filetype-pdf"></i>
+                            Download PDF (Current View)
+                        </a>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-primary" onclick="exportAllQuestions(true)">
+                            <i class="bi bi-download"></i>
+                            Download All (Q + Answers)
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="exportAllQuestions(false)">
+                            <i class="bi bi-download"></i>
+                            Download Questions Only
+                        </button>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="exportSavedQuestionsPdf(true)">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                            Saved PDF (Q + Answers)
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="exportSavedQuestionsPdf(false)">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                            Saved PDF (Questions Only)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Questions by Type -->
+                {% for q_type, topics_data in results.items() %}
+                <div class="mb-5">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="me-3">
+                            {% if q_type == 'mcqs' %}
+                                <i class="bi bi-list-ul text-primary" style="font-size: 2rem;"></i>
+                            {% elif q_type == 'short_qa' %}
+                                <i class="bi bi-chat-quote text-success" style="font-size: 2rem;"></i>
+                            {% elif q_type == 'descriptive' %}
+                                <i class="bi bi-file-text text-warning" style="font-size: 2rem;"></i>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h2 class="mb-1 text-capitalize">{{ q_type.replace('_', ' ') }}</h2>
+                            <p class="text-muted mb-0">{{ topics_data|length }} topics covered</p>
+                        </div>
+                    </div>
+
+                    <!-- Topics -->
+                    {% for topic, difficulties_dict in topics_data.items() %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h4 class="mb-0">
+                                <i class="bi bi-tag"></i>
+                                {{ topic }}
+                            </h4>
+                        </div>
+                        <div class="card-body">
+                            <!-- One question per row -->
+                            {% for difficulty, content in difficulties_dict.items() %}
+                            <div class="question-row mb-4 p-3 border rounded" data-topic="{{ topic }}" data-type="{{ q_type }}" data-difficulty="{{ difficulty }}">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <span class="badge 
+                                            {% if difficulty == 'Easy' %}bg-success
+                                            {% elif difficulty == 'Medium' %}bg-warning text-dark
+                                            {% else %}bg-danger
+                                            {% endif %} fs-6 me-3">
+                                            <i class="bi bi-{% if difficulty == 'Easy' %}check-circle{% elif difficulty == 'Medium' %}exclamation-triangle{% else %}x-circle{% endif %}"></i>
+                                            {{ difficulty }}
+                                        </span>
+                                        <span class="text-muted">{{ q_type.replace('_', ' ').title() }}</span>
+                                    </div>
+                                    <div class="question-actions">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="copyQuestion(this)">
+                                            <i class="bi bi-copy"></i> Copy
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success" onclick="saveQuestion(this, '{{ topic }}', '{{ difficulty }}', '{{ q_type }}')">
+                                            <i class="bi bi-bookmark-plus"></i> Save
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="question-content">
+                                    {{ results[q_type][topic][difficulty]
+                                       | replace('###', '')
+                                       | replace('**', '')
+                                       | replace('*', '')
+                                       | replace('---', '')
+                                       | replace('`', '')
+                                       | replace('\r\n', '\n')
+                                       | replace('\n- ', '\n• ')
+                                       | replace('- ', '• ')
+                                       | replace('\n', '<br>')
+                                       | safe }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+
+                <!-- Action Buttons -->
+                <div class="text-center mt-5">
+                    <div class="d-flex justify-content-center gap-3 flex-wrap">
+                        <a href="{{ url_for('select_questions') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i>
+                            Back
+                        </a>
+                        <a href="{{ url_for('upload_pdf') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i>
+                            Generate More Questions
+                        </a>
+                        <button onclick="exportSavedQuestionsPdf(true)" class="btn btn-primary">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                            Saved PDF (Q + Answers)
+                        </button>
+                        <button onclick="exportSavedQuestionsPdf(false)" class="btn btn-outline-primary">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                            Saved PDF (Questions Only)
+                        </button>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline">
+                            <i class="bi bi-house"></i>
+                            Back to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize saved questions array
+    window.savedQuestions = JSON.parse(localStorage.getItem('savedQuestions') || '[]');
+    
+    // Update save button states
+    updateSaveButtonStates();
+});
+
+function copyQuestion(button) {
+    const questionContent = button.closest('.question-row').querySelector('.question-content');
+    const text = htmlToPlainText(questionContent.innerHTML);
+    
+    navigator.clipboard.writeText(text).then(() => {
+        // Show feedback
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-check"></i> Copied!';
+        button.classList.remove('btn-outline-primary');
+        button.classList.add('btn-success');
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-primary');
+        }, 2000);
+    });
+}
+
+function saveQuestion(button, topic, difficulty, qType) {
+    const row = button.closest('.question-row');
+    const questionContent = row.querySelector('.question-content');
+    const text = htmlToPlainText(questionContent.innerHTML);
+    
+    const questionData = {
+        id: Date.now(),
+        topic: topic,
+        difficulty: difficulty,
+        type: qType,
+        content: text,
+        savedAt: new Date().toISOString()
+    };
+    
+    // Add to saved questions
+    window.savedQuestions.push(questionData);
+    localStorage.setItem('savedQuestions', JSON.stringify(window.savedQuestions));
+    
+    // Update button state
+    button.innerHTML = '<i class="bi bi-bookmark-check"></i> Saved';
+    button.classList.remove('btn-outline-success');
+    button.classList.add('btn-success');
+    button.disabled = true;
+    
+    // Show notification
+    showNotification('Question saved successfully!', 'success');
+}
+
+function updateSaveButtonStates() {
+    const saveButtons = document.querySelectorAll('[onclick^="saveQuestion"]');
+    saveButtons.forEach(button => {
+        const onclick = button.getAttribute('onclick');
+        const match = onclick.match(/saveQuestion\(this, '([^']+)', '([^']+)', '([^']+)'\)/);
+        if (match) {
+            const [, topic, difficulty, qType] = match;
+            const questionId = `${topic}-${difficulty}-${qType}`;
+            
+            if (window.savedQuestions.some(q => `${q.topic}-${q.difficulty}-${q.type}` === questionId)) {
+                button.innerHTML = '<i class="bi bi-bookmark-check"></i> Saved';
+                button.classList.remove('btn-outline-success');
+                button.classList.add('btn-success');
+                button.disabled = true;
+            }
+        }
+    });
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+function htmlToPlainText(html) {
+    // Convert <br> to newlines, strip HTML tags
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html.replaceAll('<br>', '\n');
+    return tmp.textContent || tmp.innerText || '';
+}
+
+function sanitizeQuestionOnly(text) {
+    // Keep questions and options, remove lines that start with Answer or Expected Answer
+    return text.split('\n')
+        .filter(line => !/^\s*(Answer:|Expected Answer:)\s*/i.test(line))
+        .join('\n');
+}
+
+function exportAllQuestions(includeAnswers = true) {
+    const rows = Array.from(document.querySelectorAll('.question-row'));
+    if (rows.length === 0) {
+        showNotification('No questions to export', 'warning');
+        return;
+    }
+
+    const data = [];
+    // CSV header
+    data.push(['QuestionType', 'Topic', 'Difficulty', 'Content']);
+
+    rows.forEach(row => {
+        const topic = row.getAttribute('data-topic');
+        const qType = row.getAttribute('data-type');
+        const difficulty = row.getAttribute('data-difficulty');
+        const htmlContent = row.querySelector('.question-content').innerHTML;
+        let textContent = htmlToPlainText(htmlContent);
+        if (!includeAnswers) {
+            textContent = sanitizeQuestionOnly(textContent);
+        }
+        data.push([qType, topic, difficulty, textContent]);
+    });
+
+    // Convert to CSV
+    const csv = data.map(cols => cols.map(cell => '"' + String(cell).replaceAll('"', '""') + '"').join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = includeAnswers ? 'questions_with_answers.csv' : 'questions_only.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showNotification(includeAnswers ? 'Downloaded Q + Answers' : 'Downloaded Questions Only', 'success');
+}
+
+// Export saved questions (from localStorage)
+function exportSavedQuestions() {
+    if (window.savedQuestions.length === 0) {
+        showNotification('No saved questions to export', 'warning');
+        return;
+    }
+    
+    const dataStr = JSON.stringify(window.savedQuestions, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'saved_questions.json';
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    showNotification('Saved questions exported successfully!', 'success');
+}
+
+async function exportSavedQuestionsPdf(includeAnswers){
+  try{
+    const items = JSON.parse(localStorage.getItem('savedQuestions')||'[]');
+    if(!items.length){
+      showNotification('No saved questions to export', 'warning');
+      return;
+    }
+    const resp = await fetch('/download_saved_pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items, include_answers: includeAnswers })
+    });
+    if(!resp.ok){
+      const text = await resp.text();
+      showNotification(text || 'Export failed', 'danger');
+      return;
+    }
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = includeAnswers ? 'saved_questions_with_answers.pdf' : 'saved_questions_only.pdf';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showNotification('Saved questions PDF downloaded', 'success');
+  }catch(e){
+    showNotification('Export failed', 'danger');
+  }
+}
+</script>
+{% endblock %}

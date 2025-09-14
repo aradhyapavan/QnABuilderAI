@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header text-center">
+                <h1 class="card-title text-gradient">
+                    <i class="bi bi-tags"></i>
+                    Manage Topics
+                </h1>
+                <p class="card-subtitle">Select AI-detected topics and/or add your own</p>
+            </div>
+            
+            <div class="card-body">
+                <form method="POST" id="topicsForm">
+                    <!-- AI Detected Topics -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">
+                            <i class="bi bi-robot text-primary"></i>
+                            AI-Detected Topics
+                        </h5>
+                        <div class="alert alert-info">
+                            <p class="mb-2"><strong>Note:</strong> Select any AI-detected topics you want to include.</p>
+                            <p class="mb-0">You can also add your own topics below.</p>
+                        </div>
+                        
+                        <div class="row g-3">
+                            {% for topic in auto_topics %}
+                            <div class="col-md-6">
+                                <label class="w-100">
+                                    <div class="topic-card bg-light border rounded p-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="selected_auto_topics" value="{{ topic }}" id="topic_{{ loop.index }}">
+                                            <label class="form-check-label ms-2" for="topic_{{ loop.index }}">
+                                                <i class="bi bi-tag text-primary me-1"></i>
+                                                <span class="topic-text fw-medium">{{ topic }}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Manual Topics -->
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-pencil-square"></i>
+                            Your Custom Topics
+                        </label>
+                        <textarea name="manual_topics" class="form-control" rows="4" 
+                                  placeholder="Enter your topics separated by commas&#10;Example: Machine Learning, Data Analysis, Statistics, Python Programming"></textarea>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Separate multiple topics with commas. These will be combined with selected AI topics.
+                        </div>
+                    </div>
+
+                    <!-- Topic Preview -->
+                    <div class="mb-4" id="topicPreview" style="display: none;">
+                        <h6 class="mb-3">
+                            <i class="bi bi-eye"></i>
+                            Topic Preview
+                        </h6>
+                        <div class="row g-2" id="previewTopics"></div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-save"></i>
+                            Save Topics & Continue
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const textarea = document.querySelector('textarea[name="manual_topics"]');
+    const preview = document.getElementById('topicPreview');
+    const previewTopics = document.getElementById('previewTopics');
+
+    function updatePreview() {
+        const manual = textarea.value.trim();
+        const selected = Array.from(document.querySelectorAll('input[name="selected_auto_topics"]:checked')).map(cb => cb.value);
+        
+        const allTopics = [];
+        if (manual) allTopics.push(...manual.split(',').map(t => t.trim()).filter(t => t));
+        allTopics.push(...selected);
+
+        if (allTopics.length > 0) {
+            previewTopics.innerHTML = allTopics.map(topic => 
+                `<div class="col-md-6 col-lg-4">
+                    <div class="topic-card bg-primary text-white border rounded p-3 text-center">
+                        <i class="bi bi-tag-fill mb-2 d-block" style="font-size: 1.2rem;"></i>
+                        <div class="topic-text fw-medium">${topic}</div>
+                    </div>
+                </div>`
+            ).join('');
+            preview.style.display = 'block';
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+
+    textarea.addEventListener('input', updatePreview);
+    document.querySelectorAll('input[name="selected_auto_topics"]').forEach(cb => cb.addEventListener('change', updatePreview));
+
+    // On submit: build hidden field with selected auto topics for backend (optional convenience)
+    document.getElementById('topicsForm').addEventListener('submit', function(e) {
+        const selected = Array.from(document.querySelectorAll('input[name="selected_auto_topics"]:checked')).map(cb => cb.value);
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'selected_auto_topics_joined';
+        hidden.value = selected.join(',');
+        this.appendChild(hidden);
+
+        if (!textarea.value.trim() && selected.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one AI-detected topic or enter a custom topic.');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

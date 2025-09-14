@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header text-center">
+                <h1 class="card-title text-gradient">
+                    <i class="bi bi-cloud-upload"></i>
+                    Upload PDF Document
+                </h1>
+                <p class="card-subtitle">Upload your PDF to generate intelligent questions</p>
+            </div>
+            
+            <div class="card-body">
+                <!-- Settings Link -->
+                <div class="text-center mb-4">
+                    <a href="{{ url_for('configure_chunking') }}" class="btn btn-outline">
+                        <i class="bi bi-gear"></i>
+                        Configure Processing Settings
+                    </a>
+                </div>
+
+                <!-- Upload Form -->
+                <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                    <div class="drop-zone" id="dropZone">
+                        <input type="file" name="pdf" id="pdfInput" class="d-none" accept=".pdf" required>
+                        
+                        <div class="drop-zone-icon">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                        </div>
+                        
+                        <h4 class="mb-3">Drag & Drop Your PDF Here</h4>
+                        <p class="text-muted mb-4">or click to browse files</p>
+                        
+                        <button type="button" class="btn btn-primary" id="browseBtn">
+                            <i class="bi bi-folder2-open"></i>
+                            Choose File
+                        </button>
+                        
+                        <div id="fileInfo" class="mt-4"></div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="progress mt-4 d-none" id="uploadProgress">
+                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+
+                    <!-- Upload Button (hidden once auto-submit is enabled) -->
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-success btn-lg" id="uploadBtn" disabled>
+                            <i class="bi bi-upload"></i>
+                            Process PDF
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('pdfInput');
+    const browseBtn = document.getElementById('browseBtn');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const fileInfo = document.getElementById('fileInfo');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const progressBar = uploadProgress.querySelector('.progress-bar');
+    const form = document.getElementById('uploadForm');
+
+    let isSubmitting = false;
+
+    // Click to browse (only via button, not the entire drop-zone)
+    browseBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (isSubmitting) return;
+        fileInput.click();
+    });
+
+    // File input change
+    fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+    // Drag and drop
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (isSubmitting) return;
+        dropZone.classList.remove('dragover');
+        const file = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (file) handleFile(file);
+    });
+
+    function autoSubmit() {
+        if (isSubmitting) return;
+        isSubmitting = true;
+        // Trigger form submit programmatically and disable controls
+        uploadBtn.innerHTML = '<span class="loading"></span> Processing...';
+        uploadBtn.disabled = true;
+        browseBtn.disabled = true;
+        uploadProgress.classList.remove('d-none');
+        
+        // Simulate progress
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += Math.random() * 15;
+            if (progress > 90) progress = 90;
+            progressBar.style.width = progress + '%';
+        }, 200);
+
+        // Submit
+        form.submit();
+
+        // Clear interval after a short delay to avoid lingering timer
+        setTimeout(() => {
+            clearInterval(interval);
+            progressBar.style.width = '100%';
+        }, 2000);
+    }
+
+    function handleFile(file) {
+        if (file && file.type === 'application/pdf') {
+            const fileSize = (file.size / 1024 / 1024).toFixed(2);
+            fileInfo.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle"></i>
+                    <strong>${file.name}</strong> (${fileSize} MB)
+                    <br>
+                    <small>Uploading...</small>
+                </div>
+            `;
+            uploadBtn.disabled = true;
+            // Auto-submit immediately after a valid file is selected/dropped
+            // Use microtask to allow DOM to update before submit
+            setTimeout(autoSubmit, 0);
+        } else {
+            fileInfo.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Please select a valid PDF file
+                </div>
+            `;
+            uploadBtn.disabled = true;
+        }
+    }
+
+    // Prevent manual double submit
+    form.addEventListener('submit', function(e) {
+        if (isSubmitting) return; // allow the first programmatic submit
+        isSubmitting = true;
+        uploadBtn.disabled = true;
+        browseBtn.disabled = true;
+    }, { once: true });
+});
+</script>
+{% endblock %}

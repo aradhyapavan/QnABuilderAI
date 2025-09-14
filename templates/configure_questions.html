@@ -1,0 +1,27 @@
+<!-- templates/configure_questions.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Configure Questions</title>
+</head>
+<body>
+    <h1>Configure Questions</h1>
+    <form method="POST">
+        {% for topic in topics %}
+        <fieldset>
+            <legend>{{ topic }}</legend>
+            <h3>MCQs</h3>
+            <label>Easy: <input type="number" name="{{ topic }}_mcq_easy" min="0"></label>
+            <label>Medium: <input type="number" name="{{ topic }}_mcq_medium" min="0"></label>
+            <label>Hard: <input type="number" name="{{ topic }}_mcq_hard" min="0"></label>
+            
+            <h3>Short Answer</h3>
+            <label>Easy: <input type="number" name="{{ topic }}_shortqa_easy" min="0"></label>
+            <label>Medium: <input type="number" name="{{ topic }}_shortqa_medium" min="0"></label>
+            <label>Hard: <input type="number" name="{{ topic }}_shortqa_hard" min="0"></label>
+        </fieldset>
+        {% endfor %}
+        <button type="submit">Generate Questions</button>
+    </form>
+</body>
+</html>

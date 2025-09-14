@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="card">
+      <div class="card-header text-center">
+        <h2 class="mb-1 text-gradient"><i class="bi bi-sliders2"></i> Question Settings</h2>
+        <div class="text-muted">Choose question types and how many you want per difficulty</div>
+      </div>
+
+      <div class="card-body">
+        <form method="POST" id="questionForm">
+          <!-- Question Types (Aesthetic cards) -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold d-block mb-2"><i class="bi bi-grid-3x3-gap"></i> Question Types</label>
+            <div class="type-grid">
+              <!-- MCQs -->
+              <label class="type-card">
+                <input class="d-none" type="checkbox" name="q_types" value="mcqs" id="mcqCheck">
+                <div class="tc">
+                  <div class="tc-icon bg-indigo"><i class="bi bi-list-ul"></i></div>
+                  <div class="tc-text">
+                    <div class="tc-title">MCQs</div>
+                    <div class="tc-sub">Multiple choice questions</div>
+                  </div>
+                </div>
+              </label>
+              <!-- Short Answer -->
+              <label class="type-card">
+                <input class="d-none" type="checkbox" name="q_types" value="short_qa" id="shortCheck">
+                <div class="tc">
+                  <div class="tc-icon bg-teal"><i class="bi bi-chat-dots"></i></div>
+                  <div class="tc-text">
+                    <div class="tc-title">Short Answer</div>
+                    <div class="tc-sub">Brief factual responses</div>
+                  </div>
+                </div>
+              </label>
+              <!-- Descriptive -->
+              <label class="type-card">
+                <input class="d-none" type="checkbox" name="q_types" value="descriptive" id="descCheck">
+                <div class="tc">
+                  <div class="tc-icon bg-amber"><i class="bi bi-pencil-square"></i></div>
+                  <div class="tc-text">
+                    <div class="tc-title">Descriptive</div>
+                    <div class="tc-sub">Detailed long-form answers</div>
+                  </div>
+                </div>
+              </label>
+            </div>
+            <div class="form-text mt-2">Tip: You can select multiple types at once.</div>
+          </div>
+
+          <!-- MCQs counts -->
+          <div id="mcqsBlock" class="qpanel" style="display:none;">
+            <div class="qpanel-h"><i class="bi bi-list-ul"></i> MCQs</div>
+            <div class="row g-3">
+              <div class="col-md-4"><label class="form-label">Easy</label><input type="number" name="mcqs_easy" class="form-control" min="0" max="10" value="1"></div>
+              <div class="col-md-4"><label class="form-label">Medium</label><input type="number" name="mcqs_medium" class="form-control" min="0" max="10" value="1"></div>
+              <div class="col-md-4"><label class="form-label">Hard</label><input type="number" name="mcqs_hard" class="form-control" min="0" max="10" value="1"></div>
+            </div>
+          </div>
+
+          <!-- Short Answer counts -->
+          <div id="shortBlock" class="qpanel" style="display:none;">
+            <div class="qpanel-h"><i class="bi bi-chat-dots"></i> Short Answer</div>
+            <div class="row g-3">
+              <div class="col-md-4"><label class="form-label">Easy</label><input type="number" name="short_qa_easy" class="form-control" min="0" max="10" value="1"></div>
+              <div class="col-md-4"><label class="form-label">Medium</label><input type="number" name="short_qa_medium" class="form-control" min="0" max="10" value="1"></div>
+              <div class="col-md-4"><label class="form-label">Hard</label><input type="number" name="short_qa_hard" class="form-control" min="0" max="10" value="1"></div>
+            </div>
+          </div>
+
+          <!-- Descriptive counts -->
+          <div id="descBlock" class="qpanel" style="display:none;">
+            <div class="qpanel-h"><i class="bi bi-pencil-square"></i> Descriptive</div>
+            <div class="row g-3">
+              <div class="col-md-4"><label class="form-label">Easy</label><input type="number" name="descriptive_easy" class="form-control" min="0" max="10" value="1"></div>
+              <div class="col-md-4"><label class="form-label">Medium</label><input type="number" name="descriptive_medium" class="form-control" min="0" max="10" value="1"></div>
+              <div class="col-md-4"><label class="form-label">Hard</label><input type="number" name="descriptive_hard" class="form-control" min="0" max="10" value="1"></div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-3 justify-content-between">
+            <a href="{{ url_for('manage_topics') }}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left"></i> Back
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg" id="generateBtn">
+              <i class="bi bi-magic"></i>
+              Generate Questions
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display:none;">
+  <div class="cube-loader">
+    <div class="cube cube1"></div>
+    <div class="cube cube2"></div>
+    <div class="cube cube3"></div>
+    <div class="cube cube4"></div>
+  </div>
+  <div class="loading-msg">Generating your questions… This may take a moment.</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const mcqCheck = document.getElementById('mcqCheck');
+  const shortCheck = document.getElementById('shortCheck');
+  const descCheck = document.getElementById('descCheck');
+
+  const mcqsBlock = document.getElementById('mcqsBlock');
+  const shortBlock = document.getElementById('shortBlock');
+  const descBlock = document.getElementById('descBlock');
+  const form = document.getElementById('questionForm');
+  const overlay = document.getElementById('loadingOverlay');
+  const generateBtn = document.getElementById('generateBtn');
+
+  function toggleBlocks() {
+    mcqsBlock.style.display = mcqCheck.checked ? 'block' : 'none';
+    shortBlock.style.display = shortCheck.checked ? 'block' : 'none';
+    descBlock.style.display = descCheck.checked ? 'block' : 'none';
+  }
+
+  [mcqCheck, shortCheck, descCheck].forEach(el => el.addEventListener('change', () => {
+    const lbl = el.closest('label.type-card');
+    if (lbl) lbl.classList.toggle('active', el.checked);
+    toggleBlocks();
+  }));
+
+  document.querySelectorAll('label.type-card input').forEach(el => {
+    const lbl = el.closest('label.type-card');
+    if (lbl) lbl.classList.toggle('active', el.checked);
+  });
+  toggleBlocks();
+
+  generateBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    overlay.style.display = 'flex';
+    setTimeout(() => form.requestSubmit(), 60);
+  });
+});
+</script>
+
+<style>
+/* Type card grid */
+.type-grid{ display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+.type-card{ cursor:pointer; }
+.type-card .tc{ display:flex; align-items:center; gap:12px; padding:14px 16px; border:1.5px solid var(--border-color); border-radius:12px; background:#fff; box-shadow: var(--shadow-sm); transition:.2s ease; }
+.type-card:hover .tc{ border-color: var(--primary-color); box-shadow: var(--shadow-md); }
+.type-card.active .tc{ border-color: var(--primary-color); background: linear-gradient(135deg,#eef2ff,#ffffff); box-shadow: var(--shadow-md); }
+.tc-icon{ width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; }
+.bg-indigo{ background:#6366f1; }
+.bg-teal{ background:#10b981; }
+.bg-amber{ background:#f59e0b; }
+.tc-title{ font-weight:600; }
+.tc-sub{ font-size:.85rem; color: var(--text-secondary); }
+
+/* Panels */
+.qpanel{ border:1px solid var(--border-color); border-radius:12px; padding:16px; background:#fff; }
+.qpanel-h{ font-weight:600; margin-bottom:8px; color:#111827; }
+
+/* Loading overlay */
+.loading-overlay{ position:fixed; inset:0; background:rgba(255,255,255,.9); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:1.25rem; z-index:1050; }
+.loading-msg{ color:#1e293b; font-weight:600; }
+.cube-loader{ width:60px; height:60px; position:relative; transform:rotateX(45deg) rotateZ(45deg); transform-style:preserve-3d; }
+.cube{ position:absolute; width:100%; height:100%; box-sizing:border-box; border:4px solid #6366f1; animation: cube-rotate 1.4s infinite ease-in-out; }
+.cube1{ transform:translateZ(30px); }
+.cube2{ transform:rotateY(90deg) translateZ(30px); animation-delay:.1s; }
+.cube3{ transform:rotateX(90deg) translateZ(30px); animation-delay:.2s; }
+.cube4{ transform:rotateY(180deg) translateZ(30px); animation-delay:.3s; }
+@keyframes cube-rotate{ 0%,100%{ border-color:#6366f1; } 50%{ border-color:#4f46e5; } }
+</style>
+{% endblock %}

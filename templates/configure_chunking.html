@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header text-center">
+                <h1 class="card-title text-gradient">
+                    <i class="bi bi-gear"></i>
+                    Configure Processing Settings
+                </h1>
+                <p class="card-subtitle">Customize how your PDF content is processed</p>
+            </div>
+            
+            <div class="card-body">
+                <form method="POST" id="configForm">
+                    <div class="row g-4">
+                        <!-- Chunk Size -->
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-rulers"></i>
+                                Chunk Size
+                            </label>
+                            <input type="number" class="form-control form-control-lg" 
+                                   id="chunk_size" name="chunk_size" 
+                                   value="{{ chunk_size }}" min="100" max="2000" step="50">
+                            <div class="form-text">
+                                Characters per chunk (100-2000)
+                            </div>
+                        </div>
+                        
+                        <!-- Chunk Overlap -->
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-arrow-repeat"></i>
+                                Chunk Overlap
+                            </label>
+                            <input type="number" class="form-control form-control-lg" 
+                                   id="chunk_overlap" name="chunk_overlap" 
+                                   value="{{ chunk_overlap }}" min="0" max="500" step="10">
+                            <div class="form-text">
+                                Overlap between chunks (0-500)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chunking Strategy -->
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-diagram-3"></i>
+                            Processing Strategy
+                        </label>
+                        <select class="form-select form-select-lg" id="chunking_strategy" name="chunking_strategy">
+                            <option value="recursive" {% if chunking_strategy == 'recursive' %}selected{% endif %}>
+                                🔄 Recursive Processing (Recommended)
+                            </option>
+                            <option value="character" {% if chunking_strategy == 'character' %}selected{% endif %}>
+                                📝 Character-based Processing
+                            </option>
+                        </select>
+                        <div class="form-text">
+                            <strong>Recursive:</strong> Preserves document structure<br>
+                            <strong>Character:</strong> Simple text splitting
+                        </div>
+                    </div>
+
+                    <!-- Live Preview -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="bi bi-eye"></i>
+                                Live Preview
+                            </h6>
+                            <div id="previewContent">
+                                <p class="text-muted">Adjust settings above to see preview...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tips -->
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-lightbulb"></i>
+                            Optimization Tips
+                        </h6>
+                        <ul class="mb-0">
+                            <li><strong>Chunk Size:</strong> 1000 characters works well for most documents</li>
+                            <li><strong>Overlap:</strong> 200 characters helps maintain context</li>
+                            <li><strong>Strategy:</strong> Recursive processing preserves document structure</li>
+                        </ul>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-3 justify-content-center">
+                        <a href="{{ url_for('upload_pdf') }}" class="btn btn-outline">
+                            <i class="bi bi-arrow-left"></i>
+                            Back to Upload
+                        </a>
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-check-circle"></i>
+                            Save Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const chunkSize = document.getElementById('chunk_size');
+    const chunkOverlap = document.getElementById('chunk_overlap');
+    const strategy = document.getElementById('chunking_strategy');
+    const preview = document.getElementById('previewContent');
+
+    const sampleText = "This is a sample document that demonstrates how text chunking works. The content will be split into smaller pieces based on your configuration settings. Each chunk will contain approximately the number of characters you specify, with some overlap between chunks to maintain context. This approach helps the AI better understand and process your document content for question generation.";
+
+    function updatePreview() {
+        const size = parseInt(chunkSize.value) || 1000;
+        const overlap = parseInt(chunkOverlap.value) || 200;
+        const selectedStrategy = strategy.value;
+
+        let chunks = [];
+        let start = 0;
+        
+        while (start < sampleText.length) {
+            let end = Math.min(start + size, sampleText.length);
+            chunks.push(sampleText.substring(start, end));
+            start = end - overlap;
+            if (start >= sampleText.length) break;
+        }
+
+        const strategyText = selectedStrategy === 'recursive' ? 
+            'Recursive processing preserves document structure' : 
+            'Character-based processing for simple text splitting';
+
+        preview.innerHTML = `
+            <div class="mb-3">
+                <strong>Strategy:</strong> ${strategyText}
+            </div>
+            <div class="mb-3">
+                <strong>Chunk Size:</strong> ${size} characters
+            </div>
+            <div class="mb-3">
+                <strong>Overlap:</strong> ${overlap} characters
+            </div>
+            <div class="mb-3">
+                <strong>Number of Chunks:</strong> ${chunks.length}
+            </div>
+            <div class="border rounded p-3 bg-white">
+                <h6>Sample Chunks:</h6>
+                ${chunks.map((chunk, i) => `
+                    <div class="mb-2 p-2 border-start border-primary border-3 bg-light">
+                        <small class="text-muted">Chunk ${i + 1} (${chunk.length} chars):</small><br>
+                        <small>${chunk.substring(0, 100)}${chunk.length > 100 ? '...' : ''}</small>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    chunkSize.addEventListener('input', updatePreview);
+    chunkOverlap.addEventListener('input', updatePreview);
+    strategy.addEventListener('change', updatePreview);
+
+    updatePreview();
+});
+</script>
+{% endblock %}

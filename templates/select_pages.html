@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header text-center">
+                <h1 class="card-title text-gradient">
+                    <i class="bi bi-file-text"></i>
+                    Select Pages to Process
+                </h1>
+                <p class="card-subtitle">Choose which pages from your PDF to analyze</p>
+            </div>
+            
+            <div class="card-body">
+                <form method="POST" id="pageForm">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-play-circle"></i>
+                                Start Page
+                            </label>
+                            <input type="number" name="start" class="form-control form-control-lg" 
+                                   min="1" max="{{ total_pages }}" value="1" required>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-stop-circle"></i>
+                                End Page
+                            </label>
+                            <input type="number" name="end" class="form-control form-control-lg" 
+                                   min="1" max="{{ total_pages }}" value="{{ total_pages }}" required>
+                        </div>
+                    </div>
+
+                    <!-- Page Range Display -->
+                    <div class="alert alert-info mt-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Total Pages:</strong> {{ total_pages }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Selected Range:</strong> 
+                                <span class="badge bg-primary" id="pageRange">1-{{ total_pages }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Selection Buttons -->
+                    <div class="text-center mb-4">
+                        <h6 class="mb-3">Quick Selection:</h6>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="selectAll()">
+                                All Pages
+                            </button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="selectFirst()">
+                                First Half
+                            </button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="selectLast()">
+                                Last Half
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-arrow-right"></i>
+                            Process Selected Pages
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const startInput = document.querySelector('input[name="start"]');
+    const endInput = document.querySelector('input[name="end"]');
+    const pageRange = document.getElementById('pageRange');
+    const totalPages = {{ total_pages }};
+
+    function updateRange() {
+        const start = parseInt(startInput.value) || 1;
+        const end = parseInt(endInput.value) || 1;
+        
+        // Validate range
+        if (start > end) {
+            endInput.value = start;
+        }
+        if (start < 1) {
+            startInput.value = 1;
+        }
+        if (end > totalPages) {
+            endInput.value = totalPages;
+        }
+        
+        pageRange.textContent = `${startInput.value}-${endInput.value}`;
+    }
+
+    startInput.addEventListener('input', updateRange);
+    endInput.addEventListener('input', updateRange);
+    
+    // Quick selection functions
+    window.selectAll = () => {
+        startInput.value = 1;
+        endInput.value = totalPages;
+        updateRange();
+    };
+    
+    window.selectFirst = () => {
+        startInput.value = 1;
+        endInput.value = Math.ceil(totalPages / 2);
+        updateRange();
+    };
+    
+    window.selectLast = () => {
+        startInput.value = Math.ceil(totalPages / 2) + 1;
+        endInput.value = totalPages;
+        updateRange();
+    };
+
+    updateRange();
+});
+</script>
+{% endblock %}
